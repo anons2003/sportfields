@@ -20,6 +20,36 @@ sportfields/
 - PostgreSQL
 - Cac bien moi truong cho backend/frontend
 
+## Database
+
+Backend dang dung:
+
+- PostgreSQL
+- Sequelize ORM
+- Co ho tro `DATABASE_URL` cho moi truong production/deploy
+
+Bien moi truong DB backend chinh:
+
+```env
+DB_NAME=your_database_name
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+Neu deploy len Render, Supabase hoac dich vu PostgreSQL ben ngoai, co the dung:
+
+```env
+DATABASE_URL=postgresql://username:password@host:5432/database
+```
+
+Luu y:
+
+- Trong local, backend co logic kiem tra va tao database neu chua ton tai.
+- Trong production hoac khi co `DATABASE_URL`, app se bo qua buoc tao DB tu dong.
+- Cau hinh chi tiet nam trong `Backend/src/config/database.js` va `Backend/src/config/db.config.js`.
+
 ## Chay Backend
 
 ```bash
