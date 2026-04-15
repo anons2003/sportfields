@@ -5,7 +5,7 @@ const {
   validationUtils, 
   passwordUtils 
 } = require('../common');
-const { uploadImage, deleteImage } = require('../config/cloudinaryConfig');
+const { uploadImage, deleteImage } = require('../config/s3Config');
 const { sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
 const { ERROR_MESSAGES, HTTP_STATUS } = constants;
@@ -129,7 +129,7 @@ class UserService {
         await deleteImage(user.profileImageId);
       }
       
-      // Upload new image to Cloudinary
+      // Upload new image to S3
       const result = await uploadImage(fileBuffer, {
         folder: 'profiles',
         public_id: `user_${userId}_${Date.now()}`
@@ -163,7 +163,7 @@ class UserService {
     }
     
     try {
-      // Delete image from Cloudinary
+      // Delete image from S3
       await deleteImage(user.profileImageId);
       
       // Update user to remove image references

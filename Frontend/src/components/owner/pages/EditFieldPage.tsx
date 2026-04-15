@@ -257,7 +257,7 @@ const EditFieldPage: React.FC = () => {
       
       // Show loading toast
       const loadingToast = toast.loading('Đang cập nhật sân bóng...', {
-        description: 'Đang upload ảnh lên Cloudinary và cập nhật thông tin sân bóng'
+        description: 'Đang upload ảnh lên S3 và cập nhật thông tin sân bóng'
       });
 
       const formDataToSend = new FormData();

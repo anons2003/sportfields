@@ -2,7 +2,7 @@ const multer = require('multer');
 const { errorHandler } = require('../common');
 const { AppError } = errorHandler;
 
-// Use memory storage for Cloudinary upload
+// Use memory storage for S3 upload
 const storage = multer.memoryStorage();
 
 // Filter to only allow certain image types

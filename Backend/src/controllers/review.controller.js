@@ -1,10 +1,9 @@
 const { Review, Field, User, Booking, TimeSlot, SubField, ReviewReply } = require('../models');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const streamifier = require('streamifier');
 const axios = require('axios');
 const { moderateContent } = require('../services/gemini.service');
+const { uploadImage } = require('../config/s3Config');
 require('dotenv').config();
 
 
@@ -13,15 +12,14 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 });
 
-// Hàm upload buffer lên Cloudinary
-const uploadToCloudinary = (fileBuffer) => {
-  return new Promise((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream({ folder: 'review-images' }, (err, result) => {
-      if (err) reject(err);
-      else resolve(result.secure_url);
-    });
-    streamifier.createReadStream(fileBuffer).pipe(stream);
+// Hàm upload buffer lên S3
+const uploadToS3 = async (fileBuffer) => {
+  const result = await uploadImage(fileBuffer, {
+    folder: 'review-images',
+    public_id: `review_${Date.now()}_${uuidv4()}`
   });
+
+  return result.secure_url;
 };
 
 const createReview = async (req, res) => {
@@ -169,7 +167,7 @@ const createReview = async (req, res) => {
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        const url = await uploadToCloudinary(file.buffer);
+        const url = await uploadToS3(file.buffer);
         imageUrls.push(url);
       }
     }
@@ -385,7 +383,7 @@ const updateReview = async (req, res) => {
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        const url = await uploadToCloudinary(file.buffer);
+        const url = await uploadToS3(file.buffer);
         imageUrls.push(url);
       }
     }
@@ -450,7 +448,7 @@ const upsertReviewByBooking = async (req, res) => {
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
-        const url = await uploadToCloudinary(file.buffer);
+        const url = await uploadToS3(file.buffer);
         imageUrls.push(url);
       }
     }

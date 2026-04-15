@@ -146,7 +146,7 @@ const getSecureImageUrl = async (req, res) => {
       });
     }
     
-    // Extract the public ID from the Cloudinary URL
+    // Extract the storage key from the stored URL
     const publicId = secureImageUtils.extractPublicIdFromUrl(imageUrl);
     
     if (!publicId) {
@@ -165,12 +165,12 @@ const getSecureImageUrl = async (req, res) => {
     
     try {
       // First try - standard signed URL
-      signedUrl = secureImageUtils.generateSignedUrl(publicId, 600, imageUrl); // Increased to 10 minutes
+      signedUrl = await secureImageUtils.generateSignedUrl(publicId, 600, imageUrl); // Increased to 10 minutes
       
       if (!signedUrl) {
         logger.debug('First attempt at signed URL generation failed, trying direct delivery method');
         // Second try - direct delivery URL
-        signedUrl = secureImageUtils.generateDirectDeliveryUrl(publicId);
+        signedUrl = await secureImageUtils.generateDirectDeliveryUrl(publicId, 600, imageUrl);
       }
       
       if (!signedUrl) {
@@ -200,7 +200,7 @@ const getSecureImageUrl = async (req, res) => {
       success: true,
       data: {
         secure_url: signedUrl,
-        expires_in: 300 // 5 minutes in seconds
+        expires_in: 600
       }
     });
   } catch (error) {

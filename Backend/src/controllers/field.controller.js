@@ -2,7 +2,7 @@ const { Field, User, Location, SubField } = require('../models');
 const { ValidationError, Op, Sequelize } = require('sequelize');
 const responseFormatter = require('../utils/responseFormatter');
 const sequelize = require('sequelize');
-const { uploadImage } = require('../config/cloudinaryConfig');
+const { uploadImage } = require('../config/s3Config');
 const geocodingService = require('../services/geocoding.enhanced');
 const logger = require('../utils/logger');
 const { getFieldQueryWithPackageValidation } = require('../middlewares/packageValidation.middleware');
@@ -324,13 +324,13 @@ const addFieldWithFiles = async (req, res) => {
                 code: 'VALIDATION_ERROR',
                 message: 'Cần phải upload ảnh giấy phép kinh doanh'
             }));
-        }// Handle uploaded files with Cloudinary
+        }// Handle uploaded files with S3
         let images1 = null, images2 = null, images3 = null;
         let businessLicenseUrl = null, identityCardUrl = null, identityCardBackUrl = null;
 
         if (uploadedFiles) {
             try {
-                // Handle field images upload to Cloudinary
+                // Handle field images upload to S3
                 if (uploadedFiles.image1) {
                     const result1 = await uploadImage(uploadedFiles.image1[0].buffer, {
                         folder: 'fields',
@@ -353,7 +353,7 @@ const addFieldWithFiles = async (req, res) => {
                     images3 = result3.secure_url;
                 }
                 
-                // Handle business documents upload to Cloudinary (as private/secure documents)
+                // Handle business documents upload to S3 (as private documents)
                 if (uploadedFiles.business_license_image) {
                     const businessResult = await uploadImage(uploadedFiles.business_license_image[0].buffer, {
                         folder: 'secure_documents/business_licenses',
@@ -362,7 +362,7 @@ const addFieldWithFiles = async (req, res) => {
                         type: 'private'
                     });
                     businessLicenseUrl = businessResult.secure_url;
-                    console.log('Uploaded business license as private document:', businessLicenseUrl);
+                    console.log('Uploaded business license to private S3 path:', businessLicenseUrl);
                 }
                 
                 if (uploadedFiles.identity_card_image) {
@@ -373,7 +373,7 @@ const addFieldWithFiles = async (req, res) => {
                         type: 'private'
                     });
                     identityCardUrl = identityResult.secure_url;
-                    console.log('Uploaded identity card front as private document:', identityCardUrl);
+                    console.log('Uploaded identity card front to private S3 path:', identityCardUrl);
                 }
                 
                 if (uploadedFiles.identity_card_back_image) {
@@ -384,13 +384,13 @@ const addFieldWithFiles = async (req, res) => {
                         type: 'private'
                     });
                     identityCardBackUrl = identityBackResult.secure_url;
-                    console.log('Uploaded identity card back as private document:', identityCardBackUrl);
+                    console.log('Uploaded identity card back to private S3 path:', identityCardBackUrl);
                 }
             } catch (uploadError) {
-                console.error('Error uploading to Cloudinary:', uploadError);
+                console.error('Error uploading to S3:', uploadError);
                 return res.status(500).json(responseFormatter.error({
                     code: 'UPLOAD_ERROR',
-                    message: 'Lỗi khi upload ảnh lên Cloudinary',
+                    message: 'Lỗi khi upload ảnh lên S3',
                     details: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
                 }));
             }
@@ -657,7 +657,7 @@ const updateFieldWithFiles = async (req, res) => {
             console.log('Processing file uploads...');
             
             try {
-                // Upload new images to Cloudinary
+                // Upload new images to S3
                 if (uploadedFiles.image1) {
                     const result1 = await uploadImage(uploadedFiles.image1[0].buffer, {
                         folder: 'fields',
@@ -680,10 +680,10 @@ const updateFieldWithFiles = async (req, res) => {
                     images3 = result3.secure_url;
                 }
             } catch (uploadError) {
-                console.error('Error uploading to Cloudinary:', uploadError);
+                console.error('Error uploading to S3:', uploadError);
                 return res.status(500).json(responseFormatter.error({
                     code: 'UPLOAD_ERROR',
-                    message: 'Lỗi khi upload ảnh lên Cloudinary',
+                    message: 'Lỗi khi upload ảnh lên S3',
                     details: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
                 }));
             }
@@ -1123,7 +1123,7 @@ const updateUserLicense = async (req, res) => {
             // Handle business license upload
             if (uploadedFiles.business_license_image) {
                 const businessResult = await uploadImage(uploadedFiles.business_license_image[0].buffer, {
-                    folder: 'business-licenses',
+                    folder: 'secure_documents/business_licenses',
                     public_id: `business_license_${userId}_${Date.now()}`
                 });
                 updateData.business_license_image = businessResult.secure_url;
@@ -1133,7 +1133,7 @@ const updateUserLicense = async (req, res) => {
             // Handle identity card front upload
             if (uploadedFiles.identity_card_image) {
                 const identityResult = await uploadImage(uploadedFiles.identity_card_image[0].buffer, {
-                    folder: 'identity-cards',
+                    folder: 'secure_documents/identity_cards',
                     public_id: `identity_card_front_${userId}_${Date.now()}`
                 });
                 updateData.identity_card_image = identityResult.secure_url;
@@ -1143,17 +1143,17 @@ const updateUserLicense = async (req, res) => {
             // Handle identity card back upload
             if (uploadedFiles.identity_card_back_image) {
                 const identityBackResult = await uploadImage(uploadedFiles.identity_card_back_image[0].buffer, {
-                    folder: 'identity-cards',
+                    folder: 'secure_documents/identity_cards',
                     public_id: `identity_card_back_${userId}_${Date.now()}`
                 });
                 updateData.identity_card_back_image = identityBackResult.secure_url;
                 uploadResults.identity_card_back = identityBackResult.secure_url;
             }
         } catch (uploadError) {
-            console.error('Error uploading to Cloudinary:', uploadError);
+            console.error('Error uploading to S3:', uploadError);
             return res.status(500).json(responseFormatter.error({
                 code: 'UPLOAD_ERROR',
-                message: 'Lỗi khi upload ảnh lên Cloudinary',
+                message: 'Lỗi khi upload ảnh lên S3',
                 details: process.env.NODE_ENV === 'development' ? uploadError.message : undefined
             }));
         }

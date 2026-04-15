@@ -200,18 +200,7 @@ export const SecureDocumentImage = ({
         return false;
       }
     };
-    
-    // More reliable way to add URL cache busting parameter
-    if (imgRef.current && url) {
-      // Add a timestamp to the URL to prevent caching
-      const timestamp = new Date().getTime();
-      const updatedUrl = url.includes('?') 
-        ? `${url}&t=${timestamp}` 
-        : `${url}?t=${timestamp}`;
-      
-      imgRef.current.src = updatedUrl;
-    }
-    
+
     // Clean up listeners when component unmounts
     return () => {
       // No global handlers to clean up

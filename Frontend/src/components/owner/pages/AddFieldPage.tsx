@@ -392,7 +392,7 @@ const AddFieldPage: React.FC = () => {
         return;
       }
 
-      // Call fieldService to submit with Cloudinary upload
+      // Call fieldService to submit with S3 upload
       await fieldService.addFieldWithFiles(formDataToSend);
       
       // Dismiss loading toast
