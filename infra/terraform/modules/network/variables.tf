@@ -5,3 +5,4 @@ variable "public_subnet_cidrs" { type = list(string) }
 variable "private_app_subnet_cidrs" { type = list(string) }
 variable "private_data_subnet_cidrs" { type = list(string) }
 variable "single_nat_gateway" { type = bool }
+variable "flow_log_retention_days" { type = number }

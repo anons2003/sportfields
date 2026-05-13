@@ -13,3 +13,7 @@ output "private_app_subnet_ids" {
 output "private_data_subnet_ids" {
   value = [for subnet in values(aws_subnet.private_data) : subnet.id]
 }
+
+output "vpc_flow_log_group_name" {
+  value = aws_cloudwatch_log_group.vpc_flow_logs.name
+}

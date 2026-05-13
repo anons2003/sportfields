@@ -16,8 +16,15 @@ nhung da loai bo cache sinh ra boi Terraform va chuan hoa lai cac module dung ch
 
 ```text
 infra/terraform
+|-- bootstrap-state
+|   |-- versions.tf
+|   |-- providers.tf
+|   |-- variables.tf
+|   |-- main.tf
+|   `-- outputs.tf
 |-- envs
 |   `-- dev
+|       |-- backend.tf
 |       |-- versions.tf
 |       |-- providers.tf
 |       |-- variables.tf
@@ -40,7 +47,8 @@ infra/terraform
 
 ## Kien truc AWS
 
-- `network`: VPC, Internet Gateway, public subnets, private app subnets, private data subnets, NAT Gateway.
+- `bootstrap-state`: S3 bucket cho Terraform state va DynamoDB table cho state lock.
+- `network`: VPC, Internet Gateway, public subnets, private app subnets, private data subnets, NAT Gateway, VPC Flow Logs.
 - `security`: security groups rieng cho ALB, EC2 backend, RDS PostgreSQL va Redis.
 - `storage`: KMS key, S3 frontend bucket, user asset bucket, backup bucket.
 - `data`: RDS PostgreSQL va ElastiCache Redis trong private data subnets.
@@ -62,7 +70,9 @@ infra/terraform
 
 ## Dieu kien truoc khi apply
 
-- AWS CLI da dang nhap vao account dung.
+- AWS CLI da dang nhap vao account dung va profile co quyen tao resource o `us-east-1`.
+- Chay bootstrap remote state truoc khi team cung dung stack:
+  `terraform -chdir=infra/terraform/bootstrap-state init && terraform -chdir=infra/terraform/bootstrap-state apply`.
 - Hosted zone Route53 da ton tai va co `route53_zone_id`.
 - ACM certificate cho CloudFront da ton tai tai `us-east-1`, cover `app.<domain>` va `assets.<domain>` hoac wildcard.
 - Backend artifact da duoc upload len S3, vi du `s3://sportfields-deployments-dev/backend/releases/latest.tar.gz`.
@@ -79,6 +89,12 @@ terraform plan -var-file=dev.tfvars
 terraform apply -var-file=dev.tfvars
 ```
 
+Neu state da ton tai local tu lan deploy truoc, sau khi bootstrap S3/DynamoDB hay chay:
+
+```bash
+terraform -chdir=infra/terraform/envs/dev init -migrate-state
+```
+
 ## Bien quan trong
 
 - `domain_name`: root domain trong Route53.
@@ -88,6 +104,7 @@ terraform apply -var-file=dev.tfvars
 - `backend_artifact_key`: object key cua backend tarball.
 - `backend_env_ssm_parameter_name`: SSM parameter chua env file.
 - `single_nat_gateway`: `true` de tiet kiem chi phi dev, `false` cho production resilience.
+- `vpc_flow_log_retention_days`: so ngay giu VPC Flow Logs trong CloudWatch Logs.
 - `db_multi_az`: `false` mac dinh cho dev, nen `true` cho production.
 - `redis_num_cache_clusters`: `1` cho dev, `2+` de bat failover.
 - `force_destroy_buckets`: chi nen `true` voi stack test co the xoa du lieu.
@@ -104,6 +121,7 @@ terraform apply -var-file=dev.tfvars
 - Giu `force_destroy_buckets = false` va `force_destroy_audit_bucket = false`.
 - Xem lai WAF rate limit theo traffic thuc te.
 - Dung remote backend cho Terraform state, vi du S3 + DynamoDB lock.
+- Rotate/delete moi AWS access key tung bi share qua chat, screenshot, terminal history hoac file local.
 
 ## Validate da chay
 

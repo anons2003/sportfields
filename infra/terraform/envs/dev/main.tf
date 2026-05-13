@@ -8,6 +8,7 @@ module "network" {
   private_app_subnet_cidrs  = var.private_app_subnet_cidrs
   private_data_subnet_cidrs = var.private_data_subnet_cidrs
   single_nat_gateway        = var.single_nat_gateway
+  flow_log_retention_days   = var.vpc_flow_log_retention_days
 }
 
 module "security" {

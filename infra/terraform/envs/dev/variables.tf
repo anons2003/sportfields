@@ -47,6 +47,12 @@ variable "single_nat_gateway" {
   default     = true
 }
 
+variable "vpc_flow_log_retention_days" {
+  type        = number
+  description = "Retention in days for VPC Flow Logs in CloudWatch Logs."
+  default     = 30
+}
+
 variable "domain_name" {
   type        = string
   description = "Root domain managed in Route53."
