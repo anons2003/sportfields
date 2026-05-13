@@ -1,0 +1,17 @@
+variable "name_prefix" { type = string }
+variable "route53_zone_id" { type = string }
+variable "frontend_domain_name" { type = string }
+variable "api_domain_name" { type = string }
+variable "frontend_bucket_id" { type = string }
+variable "frontend_bucket_arn" { type = string }
+variable "frontend_bucket_regional_domain_name" { type = string }
+variable "user_asset_bucket_id" { type = string }
+variable "user_asset_bucket_arn" { type = string }
+variable "user_asset_bucket_regional_domain_name" { type = string }
+variable "frontend_certificate_arn" { type = string }
+variable "asset_domain_name" { type = string }
+variable "alb_dns_name" { type = string }
+variable "alb_zone_id" { type = string }
+variable "alb_arn" { type = string }
+variable "waf_enable_rate_limit" { type = bool }
+variable "waf_rate_limit" { type = number }

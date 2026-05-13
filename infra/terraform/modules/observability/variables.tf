@@ -1,0 +1,6 @@
+variable "name_prefix" { type = string }
+variable "enable_security_hub" { type = bool }
+variable "enable_cloudtrail" { type = bool }
+variable "enable_aws_config" { type = bool }
+variable "kms_key_arn" { type = string }
+variable "force_destroy_audit_bucket" { type = bool }

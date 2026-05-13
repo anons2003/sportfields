@@ -1,0 +1,28 @@
+availability_zones = ["ap-southeast-1a", "ap-southeast-1b"]
+
+vpc_cidr                  = "10.30.0.0/16"
+public_subnet_cidrs       = ["10.30.0.0/24", "10.30.1.0/24"]
+private_app_subnet_cidrs  = ["10.30.10.0/24", "10.30.11.0/24"]
+private_data_subnet_cidrs = ["10.30.20.0/24", "10.30.21.0/24"]
+
+domain_name     = "example.com"
+route53_zone_id = "Z0123456789ABCDEFG"
+
+frontend_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+backend_artifact_bucket         = "sportfields-deployments-dev"
+backend_artifact_key            = "backend/releases/latest.tar.gz"
+backend_env_ssm_parameter_name  = "/sportfields/dev/backend/env"
+
+db_username = "sportfields_admin"
+db_password = "replace-me"
+
+root_volume_size                  = 20
+alb_deletion_protection           = false
+force_destroy_buckets             = false
+force_destroy_audit_bucket        = false
+backup_noncurrent_version_expiration_days = 30
+
+tags = {
+  Owner = "sportfields-team"
+}

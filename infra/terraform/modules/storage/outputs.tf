@@ -1,0 +1,9 @@
+output "kms_key_arn" { value = aws_kms_key.this.arn }
+output "frontend_bucket_id" { value = aws_s3_bucket.frontend.id }
+output "frontend_bucket_arn" { value = aws_s3_bucket.frontend.arn }
+output "frontend_bucket_regional_domain_name" { value = aws_s3_bucket.frontend.bucket_regional_domain_name }
+output "user_asset_bucket_id" { value = aws_s3_bucket.user_assets.id }
+output "user_asset_bucket_arn" { value = aws_s3_bucket.user_assets.arn }
+output "user_asset_bucket_regional_domain_name" { value = aws_s3_bucket.user_assets.bucket_regional_domain_name }
+output "backup_bucket_id" { value = aws_s3_bucket.backup.id }
+output "backup_bucket_arn" { value = aws_s3_bucket.backup.arn }

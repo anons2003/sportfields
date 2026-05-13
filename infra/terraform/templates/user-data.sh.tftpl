@@ -1,0 +1,56 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y tar gzip awscli ruby wget
+dnf install -y nodejs npm
+
+npm install -g pm2
+
+APP_DIR="/opt/${app_name}"
+mkdir -p "$APP_DIR"
+cd "$APP_DIR"
+
+aws s3 cp "s3://${artifact_bucket}/${artifact_key}" /tmp/app.tar.gz
+tar -xzf /tmp/app.tar.gz -C "$APP_DIR"
+
+aws ssm get-parameter \
+  --name "${env_ssm_parameter}" \
+  --with-decryption \
+  --query 'Parameter.Value' \
+  --output text > "$APP_DIR/.env"
+
+cd "$APP_DIR/Backend"
+npm ci --omit=dev
+
+pm2 delete ${app_name} || true
+pm2 start src/index.js --name ${app_name}
+pm2 save
+
+cat >/etc/systemd/system/pm2-root.service <<'SERVICE'
+[Unit]
+Description=PM2 process manager
+After=network.target
+
+[Service]
+Type=forking
+User=root
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+Environment=PATH=/usr/bin:/usr/local/bin:/bin
+Environment=PM2_HOME=/root/.pm2
+PIDFile=/root/.pm2/pm2.pid
+Restart=on-failure
+
+ExecStart=/usr/local/bin/pm2 resurrect
+ExecReload=/usr/local/bin/pm2 reload all
+ExecStop=/usr/local/bin/pm2 kill
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+systemctl daemon-reload
+systemctl enable pm2-root
+systemctl restart pm2-root

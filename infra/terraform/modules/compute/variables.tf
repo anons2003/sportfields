@@ -1,0 +1,28 @@
+variable "name_prefix" { type = string }
+variable "vpc_id" { type = string }
+variable "public_subnet_ids" { type = list(string) }
+variable "private_app_subnet_ids" { type = list(string) }
+variable "alb_security_group_id" { type = string }
+variable "ec2_security_group_id" { type = string }
+variable "backend_port" { type = number }
+variable "backend_instance_type" { type = string }
+variable "root_volume_size" { type = number }
+variable "enable_detailed_monitoring" { type = bool }
+variable "asg_min_size" { type = number }
+variable "asg_desired_capacity" { type = number }
+variable "asg_max_size" { type = number }
+variable "alb_deletion_protection" { type = bool }
+variable "artifact_bucket" { type = string }
+variable "artifact_key" { type = string }
+variable "backend_env_ssm_parameter_name" { type = string }
+variable "ec2_key_pair_name" {
+  type    = string
+  default = null
+}
+variable "api_domain_name" { type = string }
+variable "api_certificate_validation_method" { type = string }
+variable "route53_zone_id" { type = string }
+variable "s3_user_asset_bucket_arn" { type = string }
+variable "s3_backup_bucket_arn" { type = string }
+variable "cloudwatch_log_group_name" { type = string }
+variable "kms_key_arn" { type = string }
