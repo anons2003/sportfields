@@ -37,3 +37,19 @@ output "assets_cloudfront_domain_name" {
 output "alb_dns_name" {
   value = module.compute.alb_dns_name
 }
+
+output "vpc_flow_log_group_name" {
+  value = module.network.vpc_flow_log_group_name
+}
+
+output "efs_file_system_id" {
+  value = module.storage.efs_file_system_id
+}
+
+output "w5_backup_vault_name" {
+  value = module.observability.backup_vault_name
+}
+
+output "w5_backup_plan_id" {
+  value = module.observability.backup_plan_id
+}

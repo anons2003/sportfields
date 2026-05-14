@@ -28,6 +28,11 @@ resource "aws_db_instance" "this" {
   publicly_accessible     = false
   skip_final_snapshot     = var.db_skip_final_snapshot
   deletion_protection     = var.db_deletion_protection
+
+  tags = {
+    Name                 = "${var.name_prefix}-postgres"
+    (var.backup_tag_key) = var.backup_tag_value
+  }
 }
 
 resource "aws_elasticache_replication_group" "this" {

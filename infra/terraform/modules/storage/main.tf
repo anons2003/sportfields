@@ -1,4 +1,9 @@
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+locals {
+  bucket_prefix = "${var.name_prefix}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}"
+}
 
 data "aws_iam_policy_document" "kms" {
   statement {
@@ -42,6 +47,35 @@ data "aws_iam_policy_document" "kms" {
       values   = ["arn:aws:cloudtrail:*:${data.aws_caller_identity.current.account_id}:trail/${var.name_prefix}-trail"]
     }
   }
+
+  statement {
+    sid    = "AllowCloudFrontDecryptForS3Origins"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    actions = [
+      "kms:Decrypt",
+      "kms:DescribeKey"
+    ]
+
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "aws:SourceAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+
+    condition {
+      test     = "StringLike"
+      variable = "aws:SourceArn"
+      values   = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"]
+    }
+  }
 }
 
 resource "aws_kms_key" "this" {
@@ -57,17 +91,17 @@ resource "aws_kms_alias" "this" {
 }
 
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "${var.name_prefix}-frontend"
+  bucket        = "${local.bucket_prefix}-frontend"
   force_destroy = var.force_destroy_buckets
 }
 
 resource "aws_s3_bucket" "user_assets" {
-  bucket        = "${var.name_prefix}-user-assets"
+  bucket        = "${local.bucket_prefix}-user-assets"
   force_destroy = var.force_destroy_buckets
 }
 
 resource "aws_s3_bucket" "backup" {
-  bucket        = "${var.name_prefix}-backup"
+  bucket        = "${local.bucket_prefix}-backup"
   force_destroy = var.force_destroy_buckets
 }
 
@@ -155,4 +189,29 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
       noncurrent_days = var.backup_noncurrent_version_expiration_days
     }
   }
+}
+
+resource "aws_efs_file_system" "shared" {
+  creation_token   = "${var.name_prefix}-shared"
+  encrypted        = true
+  kms_key_id       = aws_kms_key.this.arn
+  performance_mode = "generalPurpose"
+  throughput_mode  = "elastic"
+
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
+
+  tags = {
+    Name                 = "${var.name_prefix}-shared-efs"
+    (var.backup_tag_key) = var.backup_tag_value
+  }
+}
+
+resource "aws_efs_mount_target" "shared" {
+  for_each = toset(var.private_app_subnet_ids)
+
+  file_system_id  = aws_efs_file_system.shared.id
+  subnet_id       = each.value
+  security_groups = [var.efs_security_group_id]
 }

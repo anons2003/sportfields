@@ -7,3 +7,5 @@ output "user_asset_bucket_arn" { value = aws_s3_bucket.user_assets.arn }
 output "user_asset_bucket_regional_domain_name" { value = aws_s3_bucket.user_assets.bucket_regional_domain_name }
 output "backup_bucket_id" { value = aws_s3_bucket.backup.id }
 output "backup_bucket_arn" { value = aws_s3_bucket.backup.arn }
+output "efs_file_system_id" { value = aws_efs_file_system.shared.id }
+output "efs_file_system_arn" { value = aws_efs_file_system.shared.arn }

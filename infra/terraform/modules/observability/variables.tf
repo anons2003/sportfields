@@ -4,3 +4,6 @@ variable "enable_cloudtrail" { type = bool }
 variable "enable_aws_config" { type = bool }
 variable "kms_key_arn" { type = string }
 variable "force_destroy_audit_bucket" { type = bool }
+variable "backup_tag_key" { type = string }
+variable "backup_tag_value" { type = string }
+variable "backup_retention_days" { type = number }

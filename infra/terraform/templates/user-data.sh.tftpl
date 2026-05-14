@@ -4,6 +4,22 @@ set -euxo pipefail
 dnf update -y
 dnf install -y tar gzip awscli ruby wget
 dnf install -y nodejs npm
+dnf install -y amazon-efs-utils
+dnf install -y amazon-ssm-agent || true
+systemctl enable --now amazon-ssm-agent || true
+
+SHARED_STORAGE_PATH="${shared_storage_path}"
+mkdir -p "$SHARED_STORAGE_PATH"
+for attempt in {1..12}; do
+  if mount -t efs -o tls "${efs_file_system_id}:/" "$SHARED_STORAGE_PATH"; then
+    break
+  fi
+  sleep 10
+done
+mountpoint -q "$SHARED_STORAGE_PATH"
+grep -q "${efs_file_system_id}:/" /etc/fstab || echo "${efs_file_system_id}:/ $SHARED_STORAGE_PATH efs _netdev,tls 0 0" >> /etc/fstab
+mkdir -p "$SHARED_STORAGE_PATH/reports" "$SHARED_STORAGE_PATH/evidence"
+echo "sportfields shared storage mounted $(date -Iseconds)" > "$SHARED_STORAGE_PATH/evidence/bootstrap.txt"
 
 npm install -g pm2
 
@@ -18,7 +34,8 @@ aws ssm get-parameter \
   --name "${env_ssm_parameter}" \
   --with-decryption \
   --query 'Parameter.Value' \
-  --output text > "$APP_DIR/.env"
+  --output text > "$APP_DIR/Backend/.env"
+printf '\nSHARED_STORAGE_PATH=%s\n' "$SHARED_STORAGE_PATH" >> "$APP_DIR/Backend/.env"
 
 cd "$APP_DIR/Backend"
 npm ci --omit=dev
@@ -27,30 +44,7 @@ pm2 delete ${app_name} || true
 pm2 start src/index.js --name ${app_name}
 pm2 save
 
-cat >/etc/systemd/system/pm2-root.service <<'SERVICE'
-[Unit]
-Description=PM2 process manager
-After=network.target
-
-[Service]
-Type=forking
-User=root
-LimitNOFILE=infinity
-LimitNPROC=infinity
-LimitCORE=infinity
-Environment=PATH=/usr/bin:/usr/local/bin:/bin
-Environment=PM2_HOME=/root/.pm2
-PIDFile=/root/.pm2/pm2.pid
-Restart=on-failure
-
-ExecStart=/usr/local/bin/pm2 resurrect
-ExecReload=/usr/local/bin/pm2 reload all
-ExecStop=/usr/local/bin/pm2 kill
-
-[Install]
-WantedBy=multi-user.target
-SERVICE
-
-systemctl daemon-reload
-systemctl enable pm2-root
-systemctl restart pm2-root
+sleep 20
+pm2 status
+curl -fsS http://127.0.0.1:${backend_port}/health || true
+pm2 logs ${app_name} --lines 80 --nostream || true

@@ -97,6 +97,11 @@ resource "aws_iam_role_policy" "ec2" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "ssm_managed_instance" {
+  role       = aws_iam_role.ec2.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 resource "aws_iam_instance_profile" "ec2" {
   name = "${var.name_prefix}-instance-profile"
   role = aws_iam_role.ec2.name
@@ -214,7 +219,6 @@ resource "aws_launch_template" "this" {
 
     ebs {
       encrypted             = true
-      kms_key_id            = var.kms_key_arn
       volume_size           = var.root_volume_size
       volume_type           = "gp3"
       delete_on_termination = true
@@ -222,11 +226,13 @@ resource "aws_launch_template" "this" {
   }
 
   user_data = base64encode(templatefile("${path.module}/../../templates/user-data.sh.tftpl", {
-    app_name          = "sportfields-backend"
-    artifact_bucket   = var.artifact_bucket
-    artifact_key      = var.artifact_key
-    env_ssm_parameter = var.backend_env_ssm_parameter_name
-    backend_port      = var.backend_port
+    app_name            = "sportfields-backend"
+    artifact_bucket     = var.artifact_bucket
+    artifact_key        = var.artifact_key
+    env_ssm_parameter   = var.backend_env_ssm_parameter_name
+    backend_port        = var.backend_port
+    efs_file_system_id  = var.efs_file_system_id
+    shared_storage_path = var.shared_storage_path
   }))
 
   tag_specifications {
@@ -234,6 +240,15 @@ resource "aws_launch_template" "this" {
 
     tags = {
       Name = "${var.name_prefix}-backend"
+    }
+  }
+
+  tag_specifications {
+    resource_type = "volume"
+
+    tags = {
+      Name                 = "${var.name_prefix}-backend-root"
+      (var.backup_tag_key) = var.backup_tag_value
     }
   }
 }

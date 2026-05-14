@@ -253,6 +253,30 @@ variable "backup_noncurrent_version_expiration_days" {
   default     = 30
 }
 
+variable "w5_backup_retention_days" {
+  type        = number
+  description = "Retention in days for the W5 AWS Backup plan."
+  default     = 7
+}
+
+variable "w5_backup_tag_key" {
+  type        = string
+  description = "Tag key used by the W5 AWS Backup selection."
+  default     = "Backup"
+}
+
+variable "w5_backup_tag_value" {
+  type        = string
+  description = "Tag value used by the W5 AWS Backup selection."
+  default     = "sportfields-w5"
+}
+
+variable "shared_storage_path" {
+  type        = string
+  description = "Mount path for the shared EFS file system on backend instances."
+  default     = "/mnt/sportfields-shared"
+}
+
 variable "waf_enable_rate_limit" {
   type    = bool
   default = true

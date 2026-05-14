@@ -26,3 +26,7 @@ variable "s3_user_asset_bucket_arn" { type = string }
 variable "s3_backup_bucket_arn" { type = string }
 variable "cloudwatch_log_group_name" { type = string }
 variable "kms_key_arn" { type = string }
+variable "efs_file_system_id" { type = string }
+variable "shared_storage_path" { type = string }
+variable "backup_tag_key" { type = string }
+variable "backup_tag_value" { type = string }

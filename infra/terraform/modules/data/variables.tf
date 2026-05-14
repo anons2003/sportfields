@@ -17,3 +17,5 @@ variable "redis_node_type" { type = string }
 variable "redis_engine_version" { type = string }
 variable "redis_num_cache_clusters" { type = number }
 variable "kms_key_arn" { type = string }
+variable "backup_tag_key" { type = string }
+variable "backup_tag_value" { type = string }

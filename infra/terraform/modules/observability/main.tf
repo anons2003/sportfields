@@ -1,10 +1,17 @@
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+locals {
+  audit_bucket_name = "${var.name_prefix}-${data.aws_caller_identity.current.account_id}-${data.aws_region.current.name}-audit"
+}
+
 resource "aws_cloudwatch_log_group" "backend" {
   name              = "/sportfields/backend"
   retention_in_days = 30
 }
 
 resource "aws_s3_bucket" "audit" {
-  bucket        = "${var.name_prefix}-audit"
+  bucket        = local.audit_bucket_name
   force_destroy = var.force_destroy_audit_bucket
 }
 
@@ -180,4 +187,60 @@ resource "aws_config_configuration_recorder_status" "this" {
   is_enabled = true
 
   depends_on = [aws_config_delivery_channel.this]
+}
+
+resource "aws_backup_vault" "w5" {
+  name        = "${var.name_prefix}-w5-vault"
+  kms_key_arn = var.kms_key_arn
+}
+
+resource "aws_backup_plan" "w5" {
+  name = "${var.name_prefix}-w5-backup-plan"
+
+  rule {
+    rule_name         = "daily-retain-${var.backup_retention_days}-days"
+    target_vault_name = aws_backup_vault.w5.name
+    schedule          = "cron(0 18 * * ? *)"
+
+    lifecycle {
+      delete_after = var.backup_retention_days
+    }
+  }
+}
+
+resource "aws_iam_role" "backup" {
+  name = "${var.name_prefix}-backup-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "backup.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "backup" {
+  role       = aws_iam_role.backup.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
+}
+
+resource "aws_iam_role_policy_attachment" "restore" {
+  role       = aws_iam_role.backup.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+}
+
+resource "aws_backup_selection" "w5" {
+  name         = "${var.name_prefix}-w5-tagged-resources"
+  iam_role_arn = aws_iam_role.backup.arn
+  plan_id      = aws_backup_plan.w5.id
+
+  selection_tag {
+    type  = "STRINGEQUALS"
+    key   = var.backup_tag_key
+    value = var.backup_tag_value
+  }
 }

@@ -7,11 +7,11 @@ private_app_subnet_cidrs  = ["10.30.10.0/24", "10.30.11.0/24"]
 private_data_subnet_cidrs = ["10.30.20.0/24", "10.30.21.0/24"]
 
 domain_name     = "topjob.id.vn"
-route53_zone_id = "Z0123456789ABCDEFG"
+route53_zone_id = "Z001215534TG6WOOKP0BR"
 
-frontend_acm_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+frontend_acm_certificate_arn = "arn:aws:acm:us-east-1:529715002875:certificate/7c2a556d-8981-4e72-a70c-bb4945904875"
 
-backend_artifact_bucket         = "sportfields-deployments-dev"
+backend_artifact_bucket         = "sportfields-deployments-dev-529715002875-use1"
 backend_artifact_key            = "backend/releases/latest.tar.gz"
 backend_env_ssm_parameter_name  = "/sportfields/dev/backend/env"
 

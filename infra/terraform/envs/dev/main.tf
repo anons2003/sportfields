@@ -26,6 +26,10 @@ module "storage" {
   frontend_domain                           = "${var.frontend_subdomain}.${var.domain_name}"
   force_destroy_buckets                     = var.force_destroy_buckets
   backup_noncurrent_version_expiration_days = var.backup_noncurrent_version_expiration_days
+  private_app_subnet_ids                    = module.network.private_app_subnet_ids
+  efs_security_group_id                     = module.security.efs_security_group_id
+  backup_tag_key                            = var.w5_backup_tag_key
+  backup_tag_value                          = var.w5_backup_tag_value
 }
 
 module "data" {
@@ -47,6 +51,8 @@ module "data" {
   redis_engine_version     = var.redis_engine_version
   redis_num_cache_clusters = var.redis_num_cache_clusters
   kms_key_arn              = module.storage.kms_key_arn
+  backup_tag_key           = var.w5_backup_tag_key
+  backup_tag_value         = var.w5_backup_tag_value
 }
 
 module "compute" {
@@ -77,6 +83,10 @@ module "compute" {
   s3_backup_bucket_arn              = module.storage.backup_bucket_arn
   cloudwatch_log_group_name         = module.observability.backend_log_group_name
   kms_key_arn                       = module.storage.kms_key_arn
+  efs_file_system_id                = module.storage.efs_file_system_id
+  shared_storage_path               = var.shared_storage_path
+  backup_tag_key                    = var.w5_backup_tag_key
+  backup_tag_value                  = var.w5_backup_tag_value
 }
 
 module "edge" {
@@ -110,4 +120,7 @@ module "observability" {
   enable_aws_config          = var.enable_aws_config
   kms_key_arn                = module.storage.kms_key_arn
   force_destroy_audit_bucket = var.force_destroy_audit_bucket
+  backup_tag_key             = var.w5_backup_tag_key
+  backup_tag_value           = var.w5_backup_tag_value
+  backup_retention_days      = var.w5_backup_retention_days
 }
