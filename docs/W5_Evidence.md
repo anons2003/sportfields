@@ -21,6 +21,8 @@
 
 ## MH1 — Multi-VPC Connectivity
 
+📄 **Chi tiết đầy đủ:** [MH1_evidence.md](../W5/MH1_evidence.md)
+
 ### 1. Lựa chọn kiến trúc & Rationale
 
 **Lựa chọn:** Path C - Justified Single-VPC
@@ -98,6 +100,8 @@ Log format:            Default
 ---
 
 ## MH2 — Firewall / Hardened SG+NACL
+
+📄 **Chi tiết đầy đủ:** [MH2_evidence.md](../W5/MH2_evidence.md)
 
 **Path đã chọn:** Path A — Deploy AWS Network Firewall
 
@@ -216,6 +220,8 @@ pkt_src: geneve encapsulation | direction: to_server
 ---
 
 ## MH3 — File Storage + Backup Plan
+
+📄 **Chi tiết đầy đủ:** [MH3_evidence.md](../W5/MH3_evidence.md)
 
 **Lựa chọn:** Amazon EFS Regional
 
@@ -347,6 +353,8 @@ sudo cat /mnt/sportfields-shared/aws-backup-restore_2026-05-14T17-27-00-41772040
 
 ## MH4 — API Gateway
 
+📄 **Chi tiết đầy đủ:** [MH4_evidence.md](../W5/MH4_evidence.md)
+
 **Lựa chọn:** API Gateway REST API trước Lambda `sportfields-dev-resize-image`
 
 ### Rationale
@@ -445,6 +453,8 @@ s3://sportfields-dev-529715002875-us-east-1-user-assets/resized/...
 
 ## MH5 — Scaling Pattern
 
+📄 **Chi tiết đầy đủ:** [MH5_evidence.md](../W5/MH5_evidence.md)
+
 **Pattern đã chọn:** Reserved Concurrency trên Lambda `sportfields-dev-resize-image`
 
 ### Rationale
@@ -497,6 +507,8 @@ s3://sportfields-dev-529715002875-us-east-1-user-assets/resized/profiles/...
 ---
 
 ## Stretch Goal — API Gateway Custom Domain
+
+📄 **Chi tiết đầy đủ:** [API_Gateway_custom_domain_evidence.md](../W5/API_Gateway_custom_domain_evidence.md)
 
 **Custom domain:** `api-gw.topjob.id.vn`  
 **Hosted zone:** `topjob.id.vn` / `Z001215534TG6WOOKP0BR`
