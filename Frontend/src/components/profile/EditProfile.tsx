@@ -86,13 +86,13 @@ export default function EditProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     let loadingToast;
     try {
-      
+
       toast.dismiss();
       loadingToast = toast.loading('Đang cập nhật thông tin...', {
-        duration: 3000, 
+        duration: 3000,
       });
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
@@ -111,11 +111,11 @@ export default function EditProfile() {
         if (loadingToast) {
           toast.dismiss(loadingToast);
         }
-        
+
         toast.success('Cập nhật thông tin thành công', {
           duration: 2000,
         });
-        await fetchProfile(); 
+        await fetchProfile();
       } else {
         throw new Error(data.message || 'Cập nhật thông tin thất bại');
       }
@@ -131,7 +131,7 @@ export default function EditProfile() {
     } finally {
 
       setLoading(false);
-      
+
 
       if (loadingToast) {
         toast.dismiss(loadingToast);
@@ -170,8 +170,8 @@ export default function EditProfile() {
       const data = await response.json();
       toast.dismiss(loadingToast);
 
-      if (response.ok) {
-        setProfile(prev => ({ ...prev, profileImage: data.profileImage }));
+      if (response.ok && data.success && data.data?.profileImage) {
+        setProfile(prev => ({ ...prev, profileImage: data.data.profileImage }));
         toast.success('Cập nhật ảnh đại diện thành công', {
           duration: 2000,
         });
@@ -205,7 +205,7 @@ export default function EditProfile() {
       });
 
       toast.dismiss(loadingToast);
-      
+
       if (response.ok) {
         setProfile(prev => ({ ...prev, profileImage: '' }));
         toast.success('Xóa ảnh thành công', {
@@ -367,7 +367,7 @@ export default function EditProfile() {
             <label className="block text-sm font-medium text-gray-700">Gender</label>
             <Select
               value={profile.gender}
-              onValueChange={(value: 'male' | 'female' | 'other') => 
+              onValueChange={(value: 'male' | 'female' | 'other') =>
                 setProfile(prev => ({ ...prev, gender: value }))
               }
             >
@@ -476,4 +476,4 @@ export default function EditProfile() {
       </div>
     </div>
   );
-} 
+}

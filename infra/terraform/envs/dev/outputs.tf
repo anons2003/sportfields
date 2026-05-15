@@ -53,3 +53,20 @@ output "w5_backup_vault_name" {
 output "w5_backup_plan_id" {
   value = module.observability.backup_plan_id
 }
+
+output "resize_image_api_url" {
+  value = module.serverless.resize_image_api_url
+}
+
+output "resize_image_api_key_value" {
+  value     = module.serverless.resize_image_api_key_value
+  sensitive = true
+}
+
+output "resize_image_api_id" {
+  value = module.serverless.resize_image_api_id
+}
+
+output "resize_image_lambda_name" {
+  value = module.serverless.resize_image_lambda_name
+}

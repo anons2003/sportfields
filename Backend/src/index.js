@@ -41,6 +41,9 @@ const corsOptions = {
     
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      'https://topjob.id.vn',
+      'https://www.topjob.id.vn',
+      'https://app.topjob.id.vn',
       'http://localhost:5173',
       'http://127.0.0.1:5173',
       'https://frontend-two-puce-96.vercel.app',

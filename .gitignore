@@ -12,3 +12,4 @@ crash.*.log
 tfplan*
 *accessKeys.csv
 *.pem
+infra/terraform/modules/*/build/

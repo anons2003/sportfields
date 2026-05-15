@@ -9,15 +9,43 @@ import {
   XCircle,
   Calendar,
   Package,
-  MapPin
+  MapPin,
+  FileText,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';
 import * as echarts from 'echarts';
 
+interface EfsEvidenceResult {
+  filename: string;
+  relativePath: string;
+  sharedStoragePath: string;
+  summary: {
+    users?: { total: number; owners: number; customers: number };
+    fields?: { total: number; verified: number; pending: number; subFields: number };
+    bookings?: { total: number; paid: number; cancelled: number };
+    payments?: { total: number; succeeded: number };
+    revenue?: { paidBookingTotal: number };
+  };
+}
+
+const getStoredAuthToken = () =>
+  localStorage.getItem('token') ||
+  sessionStorage.getItem('token') ||
+  localStorage.getItem('accessToken') ||
+  sessionStorage.getItem('accessToken') ||
+  localStorage.getItem('auth_token') ||
+  sessionStorage.getItem('auth_token');
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [efsReportLoading, setEfsReportLoading] = useState(false);
+  const [efsReportReading, setEfsReportReading] = useState(false);
+  const [efsReport, setEfsReport] = useState<EfsEvidenceResult | null>(null);
+  const [efsReportError, setEfsReportError] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [monthlyRevenueData, setMonthlyRevenueData] = useState<any[]>([]);
   const [lastYearRevenueData, setLastYearRevenueData] = useState<any[]>([]);
@@ -37,7 +65,7 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       try {
         // Lấy token từ localStorage
-        const token = localStorage.getItem('auth_token');
+        const token = getStoredAuthToken();
         const headers = { Authorization: `Bearer ${token}` };
         
         console.log('Fetching dashboard data with token:', token?.substring(0, 15) + '...');
@@ -261,6 +289,56 @@ const Dashboard: React.FC = () => {
     return cardTitle === 'Doanh thu gói dịch vụ' || cardTitle === 'Doanh thu đặt sân';
   };
 
+  const getAuthHeaders = () => {
+    const token = getStoredAuthToken();
+    return {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
+  const generateEfsEvidenceReport = async () => {
+    setEfsReportLoading(true);
+    setEfsReportError(null);
+
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/admin/storage/evidence`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+
+      setEfsReport(response.data.data);
+    } catch (error: any) {
+      setEfsReportError(error.response?.data?.message || error.message || 'Không thể tạo EFS report');
+    } finally {
+      setEfsReportLoading(false);
+    }
+  };
+
+  const readEfsEvidenceReport = async () => {
+    if (!efsReport?.filename) return;
+
+    setEfsReportReading(true);
+    setEfsReportError(null);
+
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/admin/storage/evidence/${efsReport.filename}`,
+        { headers: getAuthHeaders() }
+      );
+
+      setEfsReport({
+        ...response.data.data.report,
+        filename: response.data.data.filename
+      });
+    } catch (error: any) {
+      setEfsReportError(error.response?.data?.message || error.message || 'Không thể đọc EFS report');
+    } finally {
+      setEfsReportReading(false);
+    }
+  };
+
   const statsCards = dashboardData ? [
     {
       title: 'Tổng người dùng',
@@ -331,9 +409,77 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Thống kê chi tiết</h1>
+        <button
+          type="button"
+          onClick={generateEfsEvidenceReport}
+          disabled={efsReportLoading}
+          className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+          title="Tạo file report vận hành trên EFS để làm evidence MH3"
+        >
+          {efsReportLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileText className="h-4 w-4" />
+          )}
+          <span>{efsReportLoading ? 'Đang tạo report' : 'Tạo EFS report'}</span>
+        </button>
       </div>
+
+      {(efsReport || efsReportError) && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          {efsReportError ? (
+            <div className="flex items-start gap-3 text-sm text-red-700">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Không thể tạo hoặc đọc EFS report</p>
+                <p className="mt-1 text-red-600">{efsReportError}</p>
+              </div>
+            </div>
+          ) : efsReport && (
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
+                  <div>
+                    <p className="font-medium text-gray-900">EFS report đã được tạo</p>
+                    <p className="mt-1 break-all text-sm text-gray-600">{efsReport.relativePath}</p>
+                    <p className="mt-1 break-all text-xs text-gray-500">{efsReport.sharedStoragePath}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={readEfsEvidenceReport}
+                  disabled={efsReportReading}
+                  className="inline-flex items-center justify-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {efsReportReading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <span>{efsReportReading ? 'Đang đọc' : 'Đọc lại report'}</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+                <div className="rounded-md bg-gray-50 p-3">
+                  <p className="text-gray-500">Users</p>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">{formatNumber(efsReport.summary.users?.total || 0)}</p>
+                </div>
+                <div className="rounded-md bg-gray-50 p-3">
+                  <p className="text-gray-500">Fields</p>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">{formatNumber(efsReport.summary.fields?.total || 0)}</p>
+                </div>
+                <div className="rounded-md bg-gray-50 p-3">
+                  <p className="text-gray-500">Bookings</p>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">{formatNumber(efsReport.summary.bookings?.total || 0)}</p>
+                </div>
+                <div className="rounded-md bg-gray-50 p-3">
+                  <p className="text-gray-500">Revenue</p>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">{formatCurrency(efsReport.summary.revenue?.paidBookingTotal || 0)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">

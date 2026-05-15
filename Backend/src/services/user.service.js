@@ -5,7 +5,8 @@ const {
   validationUtils, 
   passwordUtils 
 } = require('../common');
-const { uploadImage, deleteImage } = require('../config/s3Config');
+const axios = require('axios');
+const { uploadImage, deleteImage, buildObjectUrl } = require('../config/s3Config');
 const { sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
 const { ERROR_MESSAGES, HTTP_STATUS } = constants;
@@ -16,6 +17,46 @@ const {
   UnauthorizedError,
   ForbiddenError
 } = errorHandler;
+
+const PROFILE_IMAGE_SIZE = 300;
+
+const resizeProfileImage = async (key) => {
+  const apiUrl = process.env.RESIZE_IMAGE_API_URL;
+  const apiKey = process.env.RESIZE_IMAGE_API_KEY;
+  const bucket = process.env.AWS_S3_BUCKET_NAME;
+
+  if (!apiUrl || !apiKey || !bucket) {
+    throw new Error('Resize image API Gateway configuration is missing');
+  }
+
+  const response = await axios.post(
+    apiUrl,
+    {
+      bucket,
+      key,
+      width: PROFILE_IMAGE_SIZE,
+      height: PROFILE_IMAGE_SIZE
+    },
+    {
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json'
+      },
+      timeout: 30000
+    }
+  );
+
+  const outputKey = response.data?.outputKey;
+  if (!outputKey) {
+    throw new Error('Resize image API did not return outputKey');
+  }
+
+  return {
+    profileImage: buildObjectUrl(outputKey),
+    profileImageId: outputKey,
+    originalImageId: key
+  };
+};
 
 class UserService {
   // Repository methods integrated directly into service
@@ -123,29 +164,46 @@ class UserService {
       throw new NotFoundError(ERROR_MESSAGES.USER_NOT_FOUND);
     }
     
+    let uploadedImage = null;
+
     try {
-      // If user already has a profile image, delete it first
+      // Upload new image to S3
+      uploadedImage = await uploadImage(fileBuffer, {
+        folder: 'profiles',
+        public_id: `user_${userId}_${Date.now()}`
+      });
+
+      const resizedImage = await resizeProfileImage(uploadedImage.public_id);
+
+      if (resizedImage.originalImageId !== resizedImage.profileImageId) {
+        await deleteImage(resizedImage.originalImageId);
+      }
+
       if (user.profileImageId) {
         await deleteImage(user.profileImageId);
       }
       
-      // Upload new image to S3
-      const result = await uploadImage(fileBuffer, {
-        folder: 'profiles',
-        public_id: `user_${userId}_${Date.now()}`
-      });
-      
       // Update user with new image URL and public ID
       await this.update(user, {
-        profileImage: result.secure_url,
-        profileImageId: result.public_id
+        profileImage: resizedImage.profileImage,
+        profileImageId: resizedImage.profileImageId
       });
       
       return {
-        profileImage: result.secure_url,
-        profileImageId: result.public_id
+        profileImage: resizedImage.profileImage,
+        profileImageId: resizedImage.profileImageId,
+        resized: true,
+        originalImageId: resizedImage.originalImageId
       };
     } catch (error) {
+      if (uploadedImage?.public_id) {
+        try {
+          await deleteImage(uploadedImage.public_id);
+        } catch (cleanupError) {
+          console.error('Error cleaning up failed profile image upload:', cleanupError);
+        }
+      }
+
       console.error('Error uploading profile image:', error);
       throw new AppError('Failed to upload profile image', HTTP_STATUS.INTERNAL_SERVER_ERROR);
     }

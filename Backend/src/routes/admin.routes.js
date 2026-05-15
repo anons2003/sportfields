@@ -3,6 +3,8 @@ const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const adminFieldController = require('../controllers/admin.field.controller');
 const adminDashboardController = require('../controllers/admin.dashboard.controller');
+const adminStorageController = require('../controllers/admin.storage.controller');
+const adminImageController = require('../controllers/admin.image.controller');
 const { authMiddleware, isAdmin } = require('../middlewares/auth.middleware');
 
 // Dashboard routes không cần xác thực khi test
@@ -17,6 +19,13 @@ router.use(authMiddleware, isAdmin);
 
 // Thống kê tổng quan
 router.get('/dashboard/stats', adminController.getDashboardStats);
+
+// MH3 EFS evidence report
+router.post('/storage/evidence', adminStorageController.createEvidenceReport);
+router.get('/storage/evidence/:filename', adminStorageController.getEvidenceReport);
+
+// MH4 API Gateway before Lambda resize evidence
+router.post('/images/resize', adminImageController.resizeImage);
 
 // Quản lý field
 router.get('/fields', adminController.getAllFieldsForAdmin);

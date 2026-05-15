@@ -111,6 +111,15 @@ module "edge" {
   waf_rate_limit                         = var.waf_rate_limit
 }
 
+module "serverless" {
+  source = "../../modules/serverless"
+
+  name_prefix           = local.name_prefix
+  user_asset_bucket_id  = module.storage.user_asset_bucket_id
+  user_asset_bucket_arn = module.storage.user_asset_bucket_arn
+  kms_key_arn           = module.storage.kms_key_arn
+}
+
 module "observability" {
   source = "../../modules/observability"
 

@@ -54,6 +54,7 @@ data "aws_iam_policy_document" "user_assets" {
     resources = [
       "${var.user_asset_bucket_arn}/fields/*",
       "${var.user_asset_bucket_arn}/profiles/*",
+      "${var.user_asset_bucket_arn}/resized/*",
       "${var.user_asset_bucket_arn}/review-images/*"
     ]
 
